@@ -1,0 +1,32 @@
+# ~/.gitconfig — shared Git settings.
+# Your name and email are NOT here: put them in ~/.gitconfig.local (see README),
+# so this repo can be public without publishing your email.
+
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = true              # replay your commits on top instead of making merge commits
+
+[fetch]
+    prune = true               # drop remote-tracking branches deleted on GitHub
+
+[push]
+    autoSetupRemote = true     # first `git push` on a new branch just works
+
+[commit]
+    verbose = true             # show the diff while you write the message
+
+[rerere]
+    enabled = true             # remember how you resolved a conflict and reuse it
+
+[alias]
+    st = status --short --branch
+    lg = log --oneline --graph --decorate -20
+    last = log -1 --stat
+    unstage = restore --staged
+    amend = commit --amend --no-edit
+
+# Included LAST so anything in the local file overrides the settings above.
+[include]
+    path = ~/.gitconfig.local

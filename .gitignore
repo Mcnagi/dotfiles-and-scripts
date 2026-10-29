@@ -1,0 +1,3 @@
+# Private files belong in ~, never in this repo — but guard against accidents.
+*.local
+.env

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# pr-ready — EXERCISE 3 (issue: "Exercise 3. pr-ready").
+# Run the same checks CI runs, locally, before you push — so CI is never the first to tell you.
+#
+# Required behaviour — tests/pr-ready.bats checks every line:
+#   pr-ready           run these steps in order, stopping at the first failure:
+#                        1. format   dotnet format --verify-no-changes
+#                        2. build    dotnet build --nologo
+#                        3. test     dotnet test --nologo --no-build
+#                      print "✔ format" / "✘ format" etc. after each step;
+#                      all pass  -> print "ready to push"; exit 0
+#                      a failure -> "pr-ready: <step> failed" to stderr; exit 1
+#                                   (later steps must NOT run)
+#   pr-ready --skip-format    skip step 1
+#   pr-ready -h | --help      usage to stdout; exit 0
+#   unknown option            usage to stderr; exit 2
+#   dotnet not installed      "pr-ready: dotnet not found on PATH" to stderr; exit 1
+#
+# Hints:
+#   - `command -v dotnet >/dev/null` checks a command exists.
+#   - `if dotnet build --nologo; then ... else ... fi` tests a command's exit code
+#     without `set -e` killing the script.
+#   - The tests replace `dotnet` with a fake script on PATH (see tests/helpers.bash),
+#     so they run without .NET installed. That trick — "stubbing" a command — is
+#     how you test scripts that call slow or dangerous tools.
+
+echo "pr-ready: not implemented yet — see LEARNING.md" >&2
+exit 99

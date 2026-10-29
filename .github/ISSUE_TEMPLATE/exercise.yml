@@ -1,0 +1,16 @@
+name: Exercise
+description: Track one exercise or stage from LEARNING.md
+labels: [exercise]
+body:
+  - type: input
+    id: script
+    attributes:
+      label: Script or file
+      placeholder: bin/extract
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Approach, edge cases, anything you got stuck on.

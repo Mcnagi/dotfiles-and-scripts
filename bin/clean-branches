@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# clean-branches — WORKED EXAMPLE.
+# Delete local branches that are finished with:
+#   1. branches fully merged into the base branch, and
+#   2. branches whose GitHub copy was deleted ("[gone]") — this is what catches
+#      SQUASH-merged branches. A squash merge creates a brand-new commit, so Git
+#      never sees your branch as "merged" by ancestry; only the deleted remote tells you.
+# Run `git fetch --prune` first (or set fetch.prune, as home/.gitconfig does).
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: clean-branches [--dry-run] [--base BRANCH] [--help]
+
+Delete local branches that are merged into BRANCH or whose remote branch is gone.
+
+  -n, --dry-run       list what would be deleted, delete nothing
+  -b, --base BRANCH   branch to compare against (default: the remote's default
+                      branch, else main)
+  -h, --help          show this help
+EOF
+}
+
+die() { echo "clean-branches: $*" >&2; exit 1; }
+
+dry_run=false
+base=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -n | --dry-run) dry_run=true ;;
+    -b | --base)
+      [[ $# -ge 2 ]] || { echo "clean-branches: --base needs a branch name" >&2; exit 2; }
+      base="$2"
+      shift
+      ;;
+    -h | --help) usage; exit 0 ;;
+    *) echo "clean-branches: unknown option '$1'" >&2; usage >&2; exit 2 ;;
+  esac
+  shift
+done
+
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "not inside a git repository"
+
+if [[ -z "$base" ]]; then
+  # origin/HEAD points at the remote's default branch, e.g. "origin/practice".
+  base="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+  base="${base#origin/}"
+  base="${base:-main}"
+fi
+git rev-parse --verify --quiet "refs/heads/$base" >/dev/null || die "base branch '$base' not found"
+
+current="$(git branch --show-current)"
+
+# Collect candidates as "branch<TAB>reason". for-each-ref is Git's stable,
+# script-friendly output; `git branch` output is meant for humans and may change.
+candidates=()
+while IFS= read -r branch; do
+  candidates+=("$branch"$'\t'"merged into $base")
+done < <(git for-each-ref --format='%(refname:short)' --merged "$base" refs/heads)
+
+while IFS=$'\t' read -r branch track; do
+  [[ "$track" == "[gone]" ]] && candidates+=("$branch"$'\t'"remote branch deleted")
+done < <(git for-each-ref --format=$'%(refname:short)\t%(upstream:track)' refs/heads)
+
+deleted=0
+declare -A seen=()
+for entry in "${candidates[@]+"${candidates[@]}"}"; do
+  branch="${entry%%$'\t'*}"
+  reason="${entry#*$'\t'}"
+  # Never delete the base or the branch you're standing on; skip duplicates.
+  [[ "$branch" == "$base" || "$branch" == "$current" || -n "${seen[$branch]:-}" ]] && continue
+  seen[$branch]=1
+
+  if "$dry_run"; then
+    echo "would delete $branch ($reason)"
+  else
+    # -D (force) is needed for squash-merged branches: Git can't prove they're merged.
+    git branch -D --quiet "$branch"
+    echo "deleted $branch ($reason)"
+  fi
+  deleted=$((deleted + 1))
+done
+
+if [[ $deleted -eq 0 ]]; then
+  echo "nothing to clean"
+fi

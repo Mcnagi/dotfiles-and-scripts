@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# new-exercise — EXERCISE 2 (issue: "Exercise 2. new-exercise").
+# Start work on an issue the way LEARNING.md in algorithms-in-csharp describes:
+# a fresh, well-named branch from the base branch.
+#
+# Required behaviour — tests/new-exercise.bats checks every line:
+#   new-exercise NUMBER SLUG
+#       creates and switches to branch "exercise/NUMBER-SLUG" from the base branch,
+#       prints "switched to exercise/NUMBER-SLUG"; exit 0
+#       base = the remote's default branch (refs/remotes/origin/HEAD) if there is one, else main
+#   new-exercise -h | --help             usage to stdout; exit 0
+#   wrong number of arguments            usage to stderr; exit 2
+#   NUMBER not all digits (e.g. "7a")    "new-exercise: NUMBER must be digits: 7a" to stderr; exit 2
+#   SLUG not lowercase-kebab (a-z 0-9 -) "new-exercise: SLUG must be lowercase-kebab: Merge_Sort"; exit 2
+#   not inside a git repository          "new-exercise: not inside a git repository"; exit 1
+#   uncommitted changes                  "new-exercise: commit or stash your changes first"; exit 1
+#   branch already exists                "new-exercise: branch exercise/7-merge-sort already exists"; exit 1
+#
+# Hints:
+#   - Regex in Bash: [[ $number =~ ^[0-9]+$ ]]
+#   - Clean tree check: `git status --porcelain` prints nothing when clean.
+#   - Branch exists: git show-ref --verify --quiet "refs/heads/$branch"
+#   - Create from a starting point: git switch -c NEW START
+#   - bin/clean-branches already finds the base branch; reuse the idea.
+
+echo "new-exercise: not implemented yet — see LEARNING.md" >&2
+exit 99
