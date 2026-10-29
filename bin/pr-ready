@@ -1,28 +1,48 @@
 #!/usr/bin/env bash
-# pr-ready — EXERCISE 3 (issue: "Exercise 3. pr-ready").
-# Run the same checks CI runs, locally, before you push — so CI is never the first to tell you.
-#
-# Required behaviour — tests/pr-ready.bats checks every line:
-#   pr-ready           run these steps in order, stopping at the first failure:
-#                        1. format   dotnet format --verify-no-changes
-#                        2. build    dotnet build --nologo
-#                        3. test     dotnet test --nologo --no-build
-#                      print "✔ format" / "✘ format" etc. after each step;
-#                      all pass  -> print "ready to push"; exit 0
-#                      a failure -> "pr-ready: <step> failed" to stderr; exit 1
-#                                   (later steps must NOT run)
-#   pr-ready --skip-format    skip step 1
-#   pr-ready -h | --help      usage to stdout; exit 0
-#   unknown option            usage to stderr; exit 2
-#   dotnet not installed      "pr-ready: dotnet not found on PATH" to stderr; exit 1
-#
-# Hints:
-#   - `command -v dotnet >/dev/null` checks a command exists.
-#   - `if dotnet build --nologo; then ... else ... fi` tests a command's exit code
-#     without `set -e` killing the script.
-#   - The tests replace `dotnet` with a fake script on PATH (see tests/helpers.bash),
-#     so they run without .NET installed. That trick — "stubbing" a command — is
-#     how you test scripts that call slow or dangerous tools.
+# pr-ready — REFERENCE SOLUTION to exercise 3.
+# Run the same checks as CI, in order, stopping at the first failure.
+set -euo pipefail
 
-echo "pr-ready: not implemented yet — see LEARNING.md" >&2
-exit 99
+usage() {
+  cat <<'EOF'
+Usage: pr-ready [--skip-format]
+
+Run format, build and test the way CI does, before you push.
+
+  --skip-format   skip the formatting check
+  -h, --help      show this help
+EOF
+}
+
+skip_format=false
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --skip-format) skip_format=true ;;
+    -h | --help) usage; exit 0 ;;
+    *) echo "pr-ready: unknown option '$1'" >&2; usage >&2; exit 2 ;;
+  esac
+  shift
+done
+
+command -v dotnet >/dev/null || { echo "pr-ready: dotnet not found on PATH" >&2; exit 1; }
+
+# step NAME COMMAND... — run one check and report it.
+# Running the command inside `if` means a failure is handled here instead of
+# `set -e` silently ending the script before we can print what failed.
+step() {
+  local name="$1"
+  shift
+  if "$@"; then
+    echo "✔ $name"
+  else
+    echo "✘ $name"
+    echo "pr-ready: $name failed" >&2
+    exit 1
+  fi
+}
+
+"$skip_format" || step format dotnet format --verify-no-changes
+step build dotnet build --nologo
+step test dotnet test --nologo --no-build
+
+echo "ready to push"

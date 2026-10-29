@@ -1,5 +1,7 @@
 # dotfiles-and-scripts
 
+> **`solutions` branch — reference answers, never merge into `main`.** See [SOLUTIONS.md](SOLUTIONS.md).
+
 [![CI](https://github.com/Mcnagi/dotfiles-and-scripts/actions/workflows/ci.yml/badge.svg)](https://github.com/Mcnagi/dotfiles-and-scripts/actions/workflows/ci.yml)
 
 My shell and Git setup, plus small scripts that automate my daily workflow.

@@ -6,7 +6,6 @@
 load helpers
 
 setup() {
-  skip "Exercise 3 — delete this line to start (see LEARNING.md)"
   setup_sandbox
   stub_command dotnet 'echo "$*" >>"$SANDBOX/calls"; [[ "$1" != "${FAIL_STEP:-none}" ]]'
   export SANDBOX

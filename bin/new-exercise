@@ -1,27 +1,50 @@
 #!/usr/bin/env bash
-# new-exercise — EXERCISE 2 (issue: "Exercise 2. new-exercise").
-# Start work on an issue the way LEARNING.md in algorithms-in-csharp describes:
-# a fresh, well-named branch from the base branch.
-#
-# Required behaviour — tests/new-exercise.bats checks every line:
-#   new-exercise NUMBER SLUG
-#       creates and switches to branch "exercise/NUMBER-SLUG" from the base branch,
-#       prints "switched to exercise/NUMBER-SLUG"; exit 0
-#       base = the remote's default branch (refs/remotes/origin/HEAD) if there is one, else main
-#   new-exercise -h | --help             usage to stdout; exit 0
-#   wrong number of arguments            usage to stderr; exit 2
-#   NUMBER not all digits (e.g. "7a")    "new-exercise: NUMBER must be digits: 7a" to stderr; exit 2
-#   SLUG not lowercase-kebab (a-z 0-9 -) "new-exercise: SLUG must be lowercase-kebab: Merge_Sort"; exit 2
-#   not inside a git repository          "new-exercise: not inside a git repository"; exit 1
-#   uncommitted changes                  "new-exercise: commit or stash your changes first"; exit 1
-#   branch already exists                "new-exercise: branch exercise/7-merge-sort already exists"; exit 1
-#
-# Hints:
-#   - Regex in Bash: [[ $number =~ ^[0-9]+$ ]]
-#   - Clean tree check: `git status --porcelain` prints nothing when clean.
-#   - Branch exists: git show-ref --verify --quiet "refs/heads/$branch"
-#   - Create from a starting point: git switch -c NEW START
-#   - bin/clean-branches already finds the base branch; reuse the idea.
+# new-exercise — REFERENCE SOLUTION to exercise 2.
+# Create a well-named branch for an issue, starting from the base branch.
+set -euo pipefail
 
-echo "new-exercise: not implemented yet — see LEARNING.md" >&2
-exit 99
+usage() {
+  cat <<'EOF'
+Usage: new-exercise NUMBER SLUG
+
+Create and switch to branch exercise/NUMBER-SLUG, starting from the base branch
+(the remote's default branch, else main).
+
+  NUMBER   the issue number, e.g. 7
+  SLUG     a short lowercase-kebab name, e.g. merge-sort
+  -h, --help   show this help
+EOF
+}
+
+die() { echo "new-exercise: $*" >&2; exit 1; }
+usage_error() { echo "new-exercise: $*" >&2; exit 2; }
+
+case "${1:-}" in
+  -h | --help) usage; exit 0 ;;
+esac
+if [[ $# -ne 2 ]]; then
+  usage >&2
+  exit 2
+fi
+
+number="$1"
+slug="$2"
+
+# Validate input before touching anything: cheap checks first, git second.
+[[ "$number" =~ ^[0-9]+$ ]] || usage_error "NUMBER must be digits: $number"
+[[ "$slug" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]] || usage_error "SLUG must be lowercase-kebab: $slug"
+
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "not inside a git repository"
+[[ -z "$(git status --porcelain)" ]] || die "commit or stash your changes first"
+
+branch="exercise/$number-$slug"
+if git show-ref --verify --quiet "refs/heads/$branch"; then
+  die "branch $branch already exists"
+fi
+
+base="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
+base="${base#origin/}"
+base="${base:-main}"
+
+git switch --quiet -c "$branch" "$base"
+echo "switched to $branch"

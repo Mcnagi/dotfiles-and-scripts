@@ -4,7 +4,6 @@
 load helpers
 
 setup() {
-  skip "Exercise 1 — delete this line to start (see LEARNING.md)"
   setup_sandbox
   mkdir src && echo "hello" >src/greeting.txt
 }

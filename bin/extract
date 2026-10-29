@@ -1,22 +1,45 @@
 #!/usr/bin/env bash
-# extract — EXERCISE 1 (issue: "Exercise 1. extract").
+# extract — REFERENCE SOLUTION to exercise 1.
 # Unpack an archive into the current folder, choosing the tool from the file extension.
-#
-# Required behaviour — tests/extract.bats checks every line:
-#   extract FILE           unpack FILE, then print "extracted FILE"; exit 0
-#   extract -h | --help    print usage to stdout; exit 0
-#   extract                (no arguments) usage to stderr; exit 2
-#   extract missing.zip    "extract: no such file: missing.zip" to stderr; exit 1
-#   extract notes.txt      "extract: unsupported file type: notes.txt" to stderr; exit 2
-#
-# Supported: .tar.gz  .tgz  .tar  .zip  .gz
-#   .tar.gz/.tgz -> tar -xzf     .tar -> tar -xf     .zip -> unzip -q     .gz -> gunzip -k
-#
-# Hints:
-#   - `case "$file" in *.tar.gz | *.tgz) ... ;; esac` matches on patterns; order matters,
-#     because "x.tar.gz" also matches *.gz.
-#   - Exit codes are a contract: 1 = it went wrong, 2 = you called it wrong.
-#   - Start with `set -euo pipefail` (see install.sh for why).
+set -euo pipefail
 
-echo "extract: not implemented yet — see LEARNING.md" >&2
-exit 99
+usage() {
+  cat <<'EOF'
+Usage: extract FILE
+
+Unpack FILE into the current folder.
+Supported: .tar.gz  .tgz  .tar  .zip  .gz
+
+  -h, --help   show this help
+EOF
+}
+
+case "${1:-}" in
+  -h | --help) usage; exit 0 ;;
+esac
+
+# Exit 2 = called wrong (usage), exit 1 = tried and failed. Scripts and CI rely on the difference.
+if [[ $# -ne 1 ]]; then
+  usage >&2
+  exit 2
+fi
+
+file="$1"
+if [[ ! -f "$file" ]]; then
+  echo "extract: no such file: $file" >&2
+  exit 1
+fi
+
+# Order matters: "x.tar.gz" also matches *.gz, so the longer pattern must come first.
+case "$file" in
+  *.tar.gz | *.tgz) tar -xzf "$file" ;;
+  *.tar) tar -xf "$file" ;;
+  *.zip) unzip -q "$file" ;;
+  *.gz) gunzip -k "$file" ;;
+  *)
+    echo "extract: unsupported file type: $file" >&2
+    exit 2
+    ;;
+esac
+
+echo "extracted $file"

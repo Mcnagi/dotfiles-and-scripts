@@ -4,7 +4,6 @@
 load helpers
 
 setup() {
-  skip "Exercise 2 — delete this line to start (see LEARNING.md)"
   setup_sandbox
   make_repo repo
   cd repo || return
